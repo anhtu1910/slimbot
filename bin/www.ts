@@ -4,6 +4,8 @@
  * Module dependencies.
  */
 
+import { SystemError } from "../error";
+
 var app = require('../app');
 var debug = require('debug')('future-bot:server');
 var http = require('http');
@@ -33,7 +35,7 @@ server.on('listening', onListening);
  * Normalize a port into a number, string, or false.
  */
 
-function normalizePort(val) {
+function normalizePort(val: string) {
   var port = parseInt(val, 10);
 
   if (isNaN(port)) {
@@ -53,7 +55,7 @@ function normalizePort(val) {
  * Event listener for HTTP server "error" event.
  */
 
-function onError(error) {
+function onError(error: SystemError) {
   if (error.syscall !== 'listen') {
     throw error;
   }
