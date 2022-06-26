@@ -5,10 +5,16 @@
  */
 
 import { SystemError } from '../error'
+import gracefulFs from 'graceful-fs'
+import fs from 'fs'
 
+require('dotenv').config()
 var app = require('../app')
 var debug = require('debug')('future-bot:server')
 var http = require('http')
+
+// patch fs
+gracefulFs.gracefulify(fs)
 
 /**
  * Get port from environment and store in Express.

@@ -17,7 +17,10 @@ export class Log {
       ),
       transports: [
         // new winston.transports.Console(),
-        new transports.File({ filename: this.pathPrefix + filename }),
+        new transports.File({
+          filename: this.pathPrefix + filename,
+          maxsize: 1024 * 1024, // 1MB
+        }),
       ],
     })
   }

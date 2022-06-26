@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { ResponseError } from './error'
 
+require('./lib/bootstrap/database')
 var createError = require('http-errors')
 var express = require('express')
 var path = require('path')
@@ -9,9 +10,7 @@ var logger = require('morgan')
 
 var indexRouter = require('./routes/index')
 var botRouter = require('./routes/bot')
-
 var app = express()
-require('dotenv').config()
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))

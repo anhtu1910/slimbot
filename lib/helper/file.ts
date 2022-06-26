@@ -21,6 +21,7 @@ export class File {
     let data = JSON.stringify(content)
     fs.writeFile(this.filename, data, err => {
       if (err) {
+        console.log(err)
         Log.error(err)
       }
     })
@@ -29,12 +30,12 @@ export class File {
   }
 
   readJSON() {
-    try {
-      let data = fs.readFileSync(this.filename).toString()
+    let data = fs.readFileSync(this.filename).toString()
 
+    try {
       return JSON.parse(data)
     } catch (e) {
-      Log.error(e)
+      return {}
     }
   }
 }

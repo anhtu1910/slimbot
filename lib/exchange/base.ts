@@ -1,58 +1,60 @@
-import { Dictionary, Exchange, Order, Ticker } from 'ccxt'
-import { File } from '../helper/file'
+import { Exchange, Order, Ticker } from 'ccxt'
+import { ExchangeConfig } from '../config/config'
 import { Log } from '../helper/log'
-import { Config } from './config'
+import { LastOrders } from '../models/last-order'
 
 interface ExchangeInterface {
-  createOrder(symbol: string, type: Order['type'], side: Order['side'], contract: number): Promise<Order>
-  getTickers(): Promise<Dictionary<Ticker>>
+  createOrder(symbol: string, type: Order['type'], side: Order['side'], contract: number): Promise<Order | undefined>
+  getTicker(symbol: string): Promise<Ticker>
   getOrders(pair: string, limit: number): Promise<Order[]>
   getLastOrder(symbol: string): Promise<Order | undefined>
-  getPositions(): Promise<any[]>
-  getLastOrderFromCache(): Order | undefined
-  saveLastOrderToCache(order?: Order): any
+  getPosition(symbol: string): Promise<any>
+  getPositions(symbols: Array<string>): Promise<any[]>
+  getLastOrderFromCache(symbol: string): Promise<any>
+  saveLastOrderToCache(order?: Order): Promise<any>
 }
 
 export abstract class BaseExchange implements ExchangeInterface {
-  private _configs: Config
   protected instance: Exchange
 
-  public get configs(): Config {
-    return this._configs
-  }
+  constructor(
+    // config
+    protected config: ExchangeConfig
+  ) {}
 
-  protected set configs(value: Config) {
-    this._configs = value
-  }
+  async createOrder(
+    symbol: string,
+    type: Order['type'],
+    side: Order['side'],
+    contract: number
+  ): Promise<Order | undefined> {
+    try {
+      let order = await this.instance.createOrder(symbol, type, side, contract)
 
-  constructor() {
-    this.configs = new Config()
-  }
+      if (!order.datetime) {
+        // handle missing datetime
+        order.datetime = new Date().toISOString()
+      }
 
-  async createOrder(symbol: string, type: Order['type'], side: Order['side'], contract: number): Promise<Order> {
-    let order = await this.instance.createOrder(symbol, type, side, contract)
+      this.saveLastOrderToCache(order)
 
-    if (!order.datetime) {
-      // handle missing datetime
-      order.datetime = new Date().toISOString()
+      return order
+    } catch (e) {
+      console.log(e)
     }
-
-    this.saveLastOrderToCache(order)
-
-    return order
   }
 
-  async getTickers(): Promise<Dictionary<Ticker>> {
-    return this.instance.fetchTickers(this.configs.pairs)
+  async getTicker(symbol: string): Promise<Ticker> {
+    return await this.instance.fetchTicker(symbol)
   }
 
   async getOrders(pair: string, limit: number): Promise<Order[]> {
-    return this.instance.fetchOrders(pair, undefined, limit)
+    return await this.instance.fetchOrders(pair, undefined, limit)
   }
 
   async getLastOrder(symbol: string): Promise<Order | undefined> {
     let order = (await this.getOrders(symbol, 1)).shift()
-    let cachedOrder = this.getLastOrderFromCache()
+    let cachedOrder = await this.getLastOrderFromCache(symbol)
 
     if (!cachedOrder) {
       Log.info('cache missed')
@@ -67,7 +69,7 @@ export abstract class BaseExchange implements ExchangeInterface {
     let orderDate = new Date(order.datetime)
     let cachedOrderDate = cachedOrder.datetime ? new Date(cachedOrder.datetime) : 0
     if (cachedOrderDate < orderDate) {
-      this.saveLastOrderToCache(order)
+      await this.saveLastOrderToCache(order)
       return order
     }
 
@@ -75,29 +77,43 @@ export abstract class BaseExchange implements ExchangeInterface {
     return cachedOrder
   }
 
-  async getPositions(): Promise<any[]> {
+  async getPosition(symbol: string): Promise<any> {
+    return
+  }
+  async getPositions(symbols: Array<string>): Promise<any[]> {
     return []
   }
+  async getLastOrderFromCache(symbol: string): Promise<any> {
+    let order = await LastOrders.findOne({
+      where: {
+        symbol: symbol,
+      },
+    })
 
-  getLastOrderFromCache(): Order | undefined {
-    let data = new File('last-order.json').readJSON()
-
-    return data
+    return order
   }
 
-  saveLastOrderToCache(order?: Order): any {
+  async saveLastOrderToCache(order?: Order): Promise<any> {
     if (!order) {
       return
     }
 
-    Log.info('cache updated')
-    new File('last-order.json').writeJSON(order)
+    await LastOrders.destroy({
+      where: {
+        symbol: order.symbol,
+      },
+    })
+
+    return await LastOrders.create({ ...order })
   }
 }
 
 export class FutureExchange extends BaseExchange {
-  async getPositions(): Promise<any[]> {
-    return this.instance.fetchPositions(this.configs.pairs)
+  async getPosition(symbol: string): Promise<any> {
+    return (await this.instance.fetchPositions([symbol])).shift()
+  }
+  async getPositions(symbols: Array<string>): Promise<any[]> {
+    return await this.instance.fetchPositions(symbols)
   }
   // async closePosition(symbol: string, type: Order['type'], side: Order['side'], contract: number) {
   //   // TODO: complete this function

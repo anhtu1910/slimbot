@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import Processor from '../lib/bot/processor'
-import { Log } from '../lib/helper/log'
+import { LastOrders } from '../lib/models/last-order'
 
 var express = require('express')
 var router = express.Router()
@@ -19,11 +19,17 @@ router.get('/start', function (req: Request, res: Response, next: NextFunction) 
     message: 'bot started',
   })
 })
+
 router.get('/debug', function (req: Request, res: Response, next: NextFunction) {
-  processor.processMarket()
+  processor.process()
   res.send({
     message: 'run bot debugger, please check the terminal output',
   })
+})
+
+router.get('/last-orders', async function (req: Request, res: Response, next: NextFunction) {
+  let orders = await LastOrders.findAll()
+  res.send(orders)
 })
 
 module.exports = router
