@@ -17,7 +17,7 @@ export default class Processor {
     setInterval(
       (async () => {
         this.cycle++
-        Log.info(`**** PROCESSING #${this.cycle} ****`)
+        Log.info(`NOTICE: PROCESSING #${this.cycle}`)
         await this.process()
         console.log(`PROCESSED #${this.cycle}`, new Date().toString())
       }).bind(this),

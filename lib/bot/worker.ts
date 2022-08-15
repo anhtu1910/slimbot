@@ -109,7 +109,14 @@ export default class Worker {
       return 0
     }
 
-    let dcaSize = Math.floor(currentSize * dcaRate * 0.01)
+    let dcaSize = currentSize * dcaRate * 0.01
+    if (Math.abs(dcaSize) < 1) {
+      let magnitude = Math.floor(Math.log10(dcaSize))
+      dcaSize = Number.parseFloat(dcaSize.toFixed(Math.abs(magnitude)))
+    } else {
+      dcaSize = Math.floor(dcaSize)
+    }
+
     dcaSize = Math.max(dcaSize, minSize)
     dcaSize = Math.min(dcaSize, maxSize)
     return dcaSize

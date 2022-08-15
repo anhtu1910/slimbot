@@ -31,38 +31,52 @@ export class ConfigLoader {
   static initPairs() {
     // TODO: load these config from files
     let pairs = [
+      // {
+      //   symbol: 'SOL/USDT',
+      //   exchange: 'binanceusdm',
+      //   direction: 'long',
+      //   dcaLevel: 4.3, // 4.5%
+      //   dcaRate: 45, // 45%
+      // },
+      // {
+      //   symbol: 'AVAX/BUSD',
+      //   exchange: 'binanceusdm',
+      //   direction: 'long',
+      //   dcaLevel: 4.3, // 4.5%
+      //   dcaRate: 42, // 45%
+      // },
       {
-        symbol: 'SOL/USDT',
-        exchange: 'binanceusdm',
-        direction: 'long',
-      },
-      {
-        symbol: 'AVAX/USDT',
-        exchange: 'binanceusdm',
-        direction: 'long',
-      },
-      {
-        symbol: 'SOL/BUSD',
+        symbol: 'BTC/BUSD',
         exchange: 'binanceusdm',
         direction: 'short',
+        dcaLevel: 3.4, // 1.5%
+        dcaRate: 39, // 30%
+        dcaMinContractCount: 0.001,
+        dcaMaxContractCount: 0.05,
+        maxTotalContractCount: 0.1,
       },
+      // {
+      //   symbol: 'SOL/BUSD',
+      //   exchange: 'binanceusdm',
+      //   direction: 'short',
+      //   dcaLevel: 3, // 4.5%
+      //   dcaRate: 40, // 45%
+      // },
     ]
 
     pairs.forEach(pair => {
-      let pairConfig = new PairConfig({
+      let config = {
         maxLiquidPriceRatio: 2,
         maxTotalContractCount: 40,
         dcaLevel: 4.3, // 4.5%
-        dcaRate: 36, // 36%
+        dcaRate: 45, // 45%
         dcaMinContractCount: 1,
         dcaMaxContractCount: 10,
         delay: 10,
-        symbol: pair.symbol,
-        exchange: pair.exchange,
-        direction: pair.direction,
-      })
+      }
+      config = Object.assign({}, config, pair)
 
-      this.container.pairs.set(pair.symbol, pairConfig)
+      this.container.pairs.set(pair.symbol, new PairConfig(config))
     })
   }
 }

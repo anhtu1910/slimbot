@@ -54,4 +54,4 @@ export const LastOrders = sequelize.define(
   { timestamps: false }
 )
 
-LastOrders.sync().then(status => console.log('last_orders table created'))
+LastOrders.truncate().then(status => console.log('last_orders table created'))
